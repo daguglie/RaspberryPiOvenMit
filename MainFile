@@ -43,7 +43,11 @@ while true:
       prevToDispaly = toDisplay
       toDisplay--
     
-    if toDisplay = 0:
+    
+    if toDisplay != prevToDisplay:
+        if toDisplay = 0:
+            
+            
       
       
       
