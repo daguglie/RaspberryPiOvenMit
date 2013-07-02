@@ -1,19 +1,58 @@
+## perform initialization
+
+import time
 from time import sleep
 from Adafruit_CharLCDPlate import Adafruit_CharLCDPlate
+from collections import deque
+import RPi.GPIO as GPIO
 
+#Setup LCD
 lcd = Adafruit_CharLCDPlate()
 lcd.begin(16, 2)
 lcd.clear()
 lcd.message("Initializing Ras\npberry Oven Mitt")#"Adafruit RGB LCD\nPlate w/Keypad!")
-sleep(3)
+sleep(3) #remove me for final project
 
-## perform initialization
+#Setup GPIO for interrupt
+GPIO.setmode(GPIO.BMC)
+GPIO.setup(12, GPIO.IN, pull_up_down=GPIO.PUD_UP) #change the number value to match the input GPIO pin. also may need to change to PUD_DOWN if it is pulldown
+timeHeart=time.time()
+GPIO.add_event_detected(12, GPIO.FALLING, callback=heartCallBack)
 
-
+#Variable declaration
+heartQueue = deque()
 toDisplay = 0 #0=temp, 1=heart, 2=pedo
 prevToDisplay = 0
 timeCounter = datetime.datetime.now()
 
+#Greeting message
+lcd.clear()
+lcd.message("The Raspberry\nOven Mitt")#"welcome message")
+sleep(3) #remove me for final project
+
+#Method declaration
+
+#Heart beat monitor: runs every time there is a heart beat
+def heartCallBack(channel):
+    global timeStamp
+	timeNow = time.time
+	if(timeNow - timeHeart) >= 0.3: #debounce
+		heartQueue.append(timeNow - timeHeart) #adds time between heart beats to the end of the queue
+		if len(heartQueue) > 10:
+			heartQueue.popleft() #removes first item in queue if the count is at ten
+		#record to Pi data
+	timeHeart = timeNow #resets heart beat clock to now in preperation for next beat time diffrence
+	
+def heartDisplay():
+	lcd.setcursor(0,1) #set cursor to second line *I believe*
+	count = 0 #gets total number of measurements in heart queue in case less then 10
+	totalBeatTime = 0 #gets the total amount of time over the last 10 of beats
+	for elm in heartQue: #loop through to fill up counters
+		count++
+		totalBeatTime += elm
+	beatPerMin = 60/(totalBeatTime/count) #math equation to find average time over last 10 beats then divides 60 by that number to find BPM
+	lcd.message(beatPerMin)
+	
 def read_temp_raw():
     f = open(device_file, 'r')
     lines = f.readlines()
